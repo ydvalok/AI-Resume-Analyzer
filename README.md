@@ -22,6 +22,7 @@ An AI-powered web app that compares a resume with a job description and provides
 - Mongoose
 - Gemini AI
 - CSS
+- Bootstrap
 
 ## Run Locally
 
