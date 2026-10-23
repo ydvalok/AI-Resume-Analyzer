@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,20 +12,19 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = JSON.parse(localStorage.getItem("user") || "null");
 
   const handleResumeChange = (event) => {
-    setResume(event.target.files[0]);
+    setResume(event.target.files[0] || null);
   };
 
   const handleAnalyze = async () => {
-    if (!resume || !jobDescription) {
+    if (!resume || !jobDescription.trim()) {
       alert("Please upload a resume and enter a job description.");
       return;
     }
 
     const formData = new FormData();
-
     formData.append("resume", resume);
     formData.append("jobDescription", jobDescription);
 
@@ -50,7 +50,6 @@ function App() {
       }
 
       setAnalysis(data.analysis);
-
       getHistory();
     } catch (error) {
       console.log(error);
@@ -110,217 +109,314 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-
     navigate("/signup");
   };
 
   return (
-    <div className="app">
-
-      <header className="top-bar">
-        <div>
-          <h1>AI Resume Analyzer</h1>
-          <p className="welcome">
-            Welcome, {user.name} 👋
-          </p>
-        </div>
-
-        <button
-          className="logout-button"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
-      </header>
-
-      <p className="intro">
-        Upload your resume and compare it with a job description to discover
-        your match score, skill gaps, strengths, and areas for improvement.
-      </p>
-
-      <div className="form-container">
-
-        <div className="upload-section">
-          <h2>Analyze Your Resume</h2>
-
-          <p>
-            Upload your resume as a PDF and paste the job description below.
-          </p>
-
-          <label className="file-label">
-            <span>
-              {resume ? resume.name : "Choose your resume PDF"}
-            </span>
-
-            <input
-              type="file"
-              accept=".pdf"
-              onChange={handleResumeChange}
-            />
-          </label>
-        </div>
-
-        <textarea
-          placeholder="Paste the job description here..."
-          rows="9"
-          value={jobDescription}
-          onChange={(event) => setJobDescription(event.target.value)}
-        ></textarea>
-
-        <button
-          className="analyze-button"
-          onClick={handleAnalyze}
-          disabled={loading}
-        >
-          {loading ? "Analyzing Resume..." : "Analyze Resume"}
-        </button>
-
-      </div>
-
-      {analysis && (
-        <div className="result">
-
-          <h2>Resume Analysis</h2>
-
-          <div className="score-card">
-
-            <div className="score-circle">
-              <span>{analysis.score}</span>
-              <small>/100</small>
-            </div>
-
-            <div>
-              <h3>Match Score</h3>
-              <p>
-                Your resume matches this job description by{" "}
-                <strong>{analysis.score}%</strong>.
-              </p>
-            </div>
-
-          </div>
-
-          <div className="analysis-grid">
-
-            <div className="analysis-section">
-              <h3>Matching Skills</h3>
-
-              {analysis.matchingSkills.length > 0 ? (
-                <div className="skill-list">
-                  {analysis.matchingSkills.map((skill, index) => (
-                    <span className="skill-badge" key={index}>
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p>No matching skills found.</p>
-              )}
-            </div>
-
-            <div className="analysis-section">
-              <h3>Missing Skills</h3>
-
-              {analysis.missingSkills.length > 0 ? (
-                <div className="skill-list">
-                  {analysis.missingSkills.map((skill, index) => (
-                    <span className="missing-badge" key={index}>
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p>No important missing skills found.</p>
-              )}
-            </div>
-
-            <div className="analysis-section">
-              <h3>Strengths</h3>
-
-              <ul>
-                {analysis.strengths.map((strength, index) => (
-                  <li key={index}>{strength}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="analysis-section">
-              <h3>Suggestions</h3>
-
-              <ul>
-                {analysis.suggestions.map((suggestion, index) => (
-                  <li key={index}>{suggestion}</li>
-                ))}
-              </ul>
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-      <div className="history">
-
-        <div className="history-header">
+    <div className="bg-light min-vh-100">
+      {/* Header */}
+      <header className="bg-dark text-white py-4">
+        <div className="container d-flex flex-wrap justify-content-between align-items-center gap-3">
           <div>
-            <h2>Analysis History</h2>
-            <p>View your previous resume analyses.</p>
+            <h1 className="h2 fw-bold mb-1">
+              AI Resume Analyzer
+            </h1>
+            <p className="text-white-50 mb-0">
+              Welcome, {user?.name || "User"} 👋
+            </p>
           </div>
 
           <button
-            className="history-button"
-            onClick={getHistory}
+            className="btn btn-outline-light"
+            onClick={handleLogout}
           >
-            Load History
+            Logout
           </button>
         </div>
+      </header>
 
-        {history.length === 0 ? (
-          <p className="no-history">
-            No previous analyses found.
-          </p>
-        ) : (
-          history.map((item) => (
+      <main className="container py-5">
+        {/* Introduction */}
+        <p className="text-secondary text-center mx-auto mb-4"
+           style={{ maxWidth: "750px" }}>
+          Upload your resume and compare it with a job description
+          to discover your match score, skill gaps, strengths,
+          and areas for improvement.
+        </p>
 
-            <div
-              className="history-card"
-              key={item._id}
-            >
+        {/* Upload Form */}
+        <div className="card border-0 shadow-sm rounded-4 mb-5">
+          <div className="card-body p-4 p-md-5">
+            <h2 className="h4 fw-bold mb-2">
+              Analyze Your Resume
+            </h2>
 
-              <div>
-                <h3>{item.resumeName}</h3>
+            <p className="text-secondary mb-4">
+              Upload your resume as a PDF and paste the job description below.
+            </p>
 
-                <p>
-                  <strong>Match Score:</strong>{" "}
-                  {item.score}/100
-                </p>
-
-                <p>
-                  <strong>Date:</strong>{" "}
-                  {new Date(item.createdAt).toLocaleString()}
-                </p>
-
-                <p>
-                  <strong>Matching Skills:</strong>{" "}
-                  {item.matchingSkills.length > 0
-                    ? item.matchingSkills.join(", ")
-                    : "None"}
-                </p>
-              </div>
-
-              <button
-                className="delete-button"
-                onClick={() => handleDelete(item._id)}
+            <div className="mb-4">
+              <label
+                htmlFor="resume"
+                className="form-label fw-semibold"
               >
-                Delete
-              </button>
+                Upload Resume (PDF)
+              </label>
 
+              <input
+                id="resume"
+                type="file"
+                accept=".pdf,application/pdf"
+                className="form-control"
+                onChange={handleResumeChange}
+              />
+
+              {resume && (
+                <div className="form-text">
+                  Selected: {resume.name}
+                </div>
+              )}
             </div>
 
-          ))
+            <div className="mb-4">
+              <label
+                htmlFor="jobDescription"
+                className="form-label fw-semibold"
+              >
+                Job Description
+              </label>
+
+              <textarea
+                id="jobDescription"
+                className="form-control"
+                placeholder="Paste the job description here..."
+                rows={9}
+                value={jobDescription}
+                onChange={(event) =>
+                  setJobDescription(event.target.value)
+                }
+              />
+            </div>
+
+            <button
+              className="btn btn-primary btn-lg w-100 fw-semibold"
+              onClick={handleAnalyze}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    aria-hidden="true"
+                  />
+                  Analyzing Resume...
+                </>
+              ) : (
+                "Analyze Resume"
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Analysis Results */}
+        {analysis && (
+          <section className="mb-5">
+            <h2 className="h3 fw-bold mb-4">
+              Resume Analysis
+            </h2>
+
+            {/* Match Score */}
+            <div className="card border-0 shadow-sm rounded-4 mb-4">
+              <div className="card-body p-4">
+                <div className="d-flex flex-column flex-sm-row align-items-center gap-4 text-center text-sm-start">
+                  <div
+                    className="rounded-circle border border-primary border-5 bg-primary-subtle text-primary d-flex flex-column justify-content-center align-items-center flex-shrink-0"
+                    style={{ width: "115px", height: "115px" }}
+                  >
+                    <span className="fs-2 fw-bold">
+                      {analysis.score}
+                    </span>
+                    <small>/100</small>
+                  </div>
+
+                  <div>
+                    <h3 className="h4 fw-bold">
+                      Match Score
+                    </h3>
+                    <p className="text-secondary mb-0">
+                      Your resume matches this job description by{" "}
+                      <strong>{analysis.score}%</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Analysis Grid */}
+            <div className="row g-4">
+              <div className="col-12 col-md-6">
+                <div className="card border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body p-4">
+                    <h3 className="h5 fw-bold mb-3">
+                      Matching Skills
+                    </h3>
+
+                    {analysis.matchingSkills.length > 0 ? (
+                      <div className="d-flex flex-wrap gap-2">
+                        {analysis.matchingSkills.map((skill, index) => (
+                          <span
+                            className="badge rounded-pill text-bg-success p-2"
+                            key={index}
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-secondary mb-0">
+                        No matching skills found.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <div className="card border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body p-4">
+                    <h3 className="h5 fw-bold mb-3">
+                      Missing Skills
+                    </h3>
+
+                    {analysis.missingSkills.length > 0 ? (
+                      <div className="d-flex flex-wrap gap-2">
+                        {analysis.missingSkills.map((skill, index) => (
+                          <span
+                            className="badge rounded-pill text-bg-danger p-2"
+                            key={index}
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-secondary mb-0">
+                        No important missing skills found.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <div className="card border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body p-4">
+                    <h3 className="h5 fw-bold mb-3">
+                      Strengths
+                    </h3>
+
+                    <ul className="mb-0 text-secondary">
+                      {analysis.strengths.map((strength, index) => (
+                        <li className="mb-2" key={index}>
+                          {strength}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <div className="card border-0 shadow-sm rounded-4 h-100">
+                  <div className="card-body p-4">
+                    <h3 className="h5 fw-bold mb-3">
+                      Suggestions
+                    </h3>
+
+                    <ul className="mb-0 text-secondary">
+                      {analysis.suggestions.map((suggestion, index) => (
+                        <li className="mb-2" key={index}>
+                          {suggestion}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         )}
 
-      </div>
+        {/* History */}
+        <section>
+          <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+              <h2 className="h3 fw-bold mb-1">
+                Analysis History
+              </h2>
+              <p className="text-secondary mb-0">
+                View your previous resume analyses.
+              </p>
+            </div>
 
+            <button
+              className="btn btn-outline-primary"
+              onClick={getHistory}
+            >
+              Load History
+            </button>
+          </div>
+
+          {history.length === 0 ? (
+            <div className="alert alert-secondary">
+              No previous analyses loaded.
+            </div>
+          ) : (
+            <div className="d-flex flex-column gap-3">
+              {history.map((item) => (
+                <div
+                  className="card border-0 shadow-sm rounded-4"
+                  key={item._id}
+                >
+                  <div className="card-body p-4 d-flex flex-column flex-sm-row justify-content-between align-items-start gap-3">
+                    <div>
+                      <h3 className="h5 fw-bold mb-3">
+                        {item.resumeName}
+                      </h3>
+
+                      <p className="mb-2">
+                        <strong>Match Score:</strong>{" "}
+                        <span className="badge text-bg-primary">
+                          {item.score}/100
+                        </span>
+                      </p>
+
+                      <p className="text-secondary mb-2">
+                        <strong>Date:</strong>{" "}
+                        {new Date(item.createdAt).toLocaleString()}
+                      </p>
+
+                      <p className="text-secondary mb-0">
+                        <strong>Matching Skills:</strong>{" "}
+                        {item.matchingSkills.length > 0
+                          ? item.matchingSkills.join(", ")
+                          : "None"}
+                      </p>
+                    </div>
+
+                    <button
+                      className="btn btn-outline-danger"
+                      onClick={() => handleDelete(item._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
     </div>
   );
 }
